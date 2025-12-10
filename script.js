@@ -1,4 +1,4 @@
-// script.js — merged & safe version
+// script.js — dipisah & diperbaiki
 (function () {
   "use strict";
 
@@ -176,29 +176,31 @@
       else correctAnswer = a * b;
 
       const q = `${a} ${op} ${b} = ?`;
-      document.getElementById("mathQuestion").innerText = q;
-      document.getElementById("mathAnswer").value = "";
-      document.getElementById("mathResult").innerText = "";
+      const mq = document.getElementById("mathQuestion");
+      if (mq) mq.innerText = q;
+      const ma = document.getElementById("mathAnswer");
+      if (ma) ma.value = "";
+      const mr = document.getElementById("mathResult");
+      if (mr) mr.innerText = "";
     }
 
     function checkMath() {
-      const val = Number(document.getElementById("mathAnswer").value);
+      const ma = document.getElementById("mathAnswer");
+      const val = ma ? Number(ma.value) : NaN;
+      const mr = document.getElementById("mathResult");
       if (Number.isNaN(val)) {
-        document.getElementById("mathResult").innerText =
-          "Masukkan angka dulu.";
+        if (mr) mr.innerText = "Masukkan angka dulu.";
         return;
       }
       if (val === correctAnswer) {
         mathScore += 10;
-        document.getElementById("mathResult").innerText = "Benar! 🎉";
+        if (mr) mr.innerText = "Benar! 🎉";
       } else {
         mathScore -= 5;
-        document.getElementById(
-          "mathResult"
-        ).innerText = `Salah ❌ (jawaban: ${correctAnswer})`;
+        if (mr) mr.innerText = `Salah ❌ (jawaban: ${correctAnswer})`;
       }
-      document.getElementById("mathScore").innerText = mathScore;
-      // next
+      const ms = document.getElementById("mathScore");
+      if (ms) ms.innerText = mathScore;
       setTimeout(startMath, 200);
     }
 
@@ -227,10 +229,13 @@
     function startEng() {
       currentIndex = Math.floor(Math.random() * questions.length);
       const q = questions[currentIndex];
-      document.getElementById("engQuestion").innerText = q.q;
+      const eq = document.getElementById("engQuestion");
+      if (eq) eq.innerText = q.q;
       const choicesEl = document.getElementById("engChoices");
+      if (!choicesEl) return;
       choicesEl.innerHTML = "";
-      document.getElementById("engResult").innerText = "";
+      const er = document.getElementById("engResult");
+      if (er) er.innerText = "";
 
       q.c.forEach((text, i) => {
         const btn = document.createElement("button");
@@ -244,17 +249,17 @@
     function checkEng(choice) {
       const q = questions[currentIndex];
       const buttons = document.querySelectorAll(".choice");
+      const er = document.getElementById("engResult");
       if (choice === q.a) {
         engScore++;
-        document.getElementById("engResult").innerText = "Benar! 🎉";
+        if (er) er.innerText = "Benar! 🎉";
         buttons[choice]?.classList.add("correct");
       } else {
-        document.getElementById("engResult").innerText = `Salah ❌ (Benar: ${
-          q.c[q.a]
-        })`;
+        if (er) er.innerText = `Salah ❌ (Benar: ${q.c[q.a]})`;
         buttons[choice]?.classList.add("wrong");
       }
-      document.getElementById("engScore").innerText = engScore;
+      const es = document.getElementById("engScore");
+      if (es) es.innerText = engScore;
       setTimeout(startEng, 800);
     }
 
@@ -271,7 +276,8 @@
         .catch(() => fallbackTxt());
     }
     function fallbackTxt() {
-      const txt = `MARVELINO ALFRADO\nFreelance Web Developer\nKontak: +62 81998011501\nEmail: marvelpenanggal@gmail.com\n`;
+      const txt =
+        "MARVELINO ALFRADO\nFreelance Web Developer\nKontak: +62 81998011501\nEmail: marvelpenanggal@gmail.com\n";
       const blob = new Blob([txt], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -359,6 +365,38 @@
         const mp = document.getElementById("mapPopup");
         if (mp && mp.style.display === "grid") closeMap();
       }
+    });
+
+    // NAV: toggle for mobile
+    const header = document.getElementById("siteHeader");
+    const toggle = document.getElementById("menuToggle");
+    const mainNav = document.getElementById("mainNav");
+
+    function setNav(open) {
+      if (open) {
+        header.classList.add("nav-open");
+        toggle.setAttribute("aria-expanded", "true");
+      } else {
+        header.classList.remove("nav-open");
+        toggle.setAttribute("aria-expanded", "false");
+      }
+    }
+
+    toggle.addEventListener("click", () => {
+      const isOpen = header.classList.contains("nav-open");
+      setNav(!isOpen);
+    });
+
+    // close nav when clicking a link (mobile)
+    mainNav.querySelectorAll("a, button").forEach((el) =>
+      el.addEventListener("click", () => {
+        if (window.innerWidth <= 900) setNav(false);
+      })
+    );
+
+    // ensure nav resets on resize to desktop
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 900) setNav(false);
     });
 
     // expose map functions
