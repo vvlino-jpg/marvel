@@ -1,9 +1,7 @@
 // script.js — merged & safe version
-
 (function () {
   "use strict";
 
-  // Wait for DOM to be ready before querying elements (prevents null errors)
   document.addEventListener("DOMContentLoaded", () => {
     // ===== CORE =====
     const yearEl = document.getElementById("year");
@@ -162,41 +160,131 @@
       }
     });
 
-    // download CV (fallback to text)
+    // ========== GAME: MATHEMATICS ==========
+    let mathScore = 0;
+    let correctAnswer = 0;
+
+    function startMath() {
+      const a = Math.floor(Math.random() * 20) + 1;
+      const b = Math.floor(Math.random() * 20) + 1;
+      const ops = ["+", "-", "*"];
+      const op = ops[Math.floor(Math.random() * ops.length)];
+
+      // compute safely without eval
+      if (op === "+") correctAnswer = a + b;
+      else if (op === "-") correctAnswer = a - b;
+      else correctAnswer = a * b;
+
+      const q = `${a} ${op} ${b} = ?`;
+      document.getElementById("mathQuestion").innerText = q;
+      document.getElementById("mathAnswer").value = "";
+      document.getElementById("mathResult").innerText = "";
+    }
+
+    function checkMath() {
+      const val = Number(document.getElementById("mathAnswer").value);
+      if (Number.isNaN(val)) {
+        document.getElementById("mathResult").innerText =
+          "Masukkan angka dulu.";
+        return;
+      }
+      if (val === correctAnswer) {
+        mathScore += 10;
+        document.getElementById("mathResult").innerText = "Benar! 🎉";
+      } else {
+        mathScore -= 5;
+        document.getElementById(
+          "mathResult"
+        ).innerText = `Salah ❌ (jawaban: ${correctAnswer})`;
+      }
+      document.getElementById("mathScore").innerText = mathScore;
+      // next
+      setTimeout(startMath, 200);
+    }
+
+    document.getElementById("mathStart")?.addEventListener("click", startMath);
+    document.getElementById("mathCheck")?.addEventListener("click", checkMath);
+
+    // ========== GAME: ENGLISH ==========
+    let engScore = 0;
+    let currentIndex = 0;
+
+    const questions = [
+      {
+        q: "What is the meaning of 'Happy'?",
+        c: ["Sedih", "Bahagia", "Takut", "Besar"],
+        a: 1,
+      },
+      { q: "Synonym of 'Big'?", c: ["Huge", "Tiny", "Slow", "Weak"], a: 0 },
+      { q: "Opposite of 'Cold'?", c: ["Warm", "Ice", "Dark", "Soft"], a: 0 },
+      {
+        q: "Meaning of 'Quick'?",
+        c: ["Lambat", "Berani", "Cepat", "Panas"],
+        a: 2,
+      },
+    ];
+
+    function startEng() {
+      currentIndex = Math.floor(Math.random() * questions.length);
+      const q = questions[currentIndex];
+      document.getElementById("engQuestion").innerText = q.q;
+      const choicesEl = document.getElementById("engChoices");
+      choicesEl.innerHTML = "";
+      document.getElementById("engResult").innerText = "";
+
+      q.c.forEach((text, i) => {
+        const btn = document.createElement("button");
+        btn.className = "choice";
+        btn.innerText = text;
+        btn.addEventListener("click", () => checkEng(i));
+        choicesEl.appendChild(btn);
+      });
+    }
+
+    function checkEng(choice) {
+      const q = questions[currentIndex];
+      const buttons = document.querySelectorAll(".choice");
+      if (choice === q.a) {
+        engScore++;
+        document.getElementById("engResult").innerText = "Benar! 🎉";
+        buttons[choice]?.classList.add("correct");
+      } else {
+        document.getElementById("engResult").innerText = `Salah ❌ (Benar: ${
+          q.c[q.a]
+        })`;
+        buttons[choice]?.classList.add("wrong");
+      }
+      document.getElementById("engScore").innerText = engScore;
+      setTimeout(startEng, 800);
+    }
+
+    document.getElementById("engStart")?.addEventListener("click", startEng);
+
+    // ========== DOWNLOAD CV ==========
     function downloadCV() {
       const pdf = "CV_Marvelino.pdf";
       fetch(pdf, { method: "HEAD" })
         .then((res) => {
           if (res.ok) window.open(pdf, "_blank");
-          else {
-            const txt = `MARVELINO ALFRADO\nFreelance Web Developer\nKontak: +62 81998011501\nEmail: email@marvelinoo.com\n`;
-            const blob = new Blob([txt], { type: "text/plain" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "CV-MARVELINO-ALFRADO.txt";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-          }
+          else fallbackTxt();
         })
-        .catch(() => {
-          const txt = `MARVELINO ALFRADO\nFreelance Web Developer\nKontak: +62 81998011501\nEmail: email@marvelinoo.com\n`;
-          const blob = new Blob([txt], { type: "text/plain" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "CV-MARVELINO-ALFRADO.txt";
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        });
+        .catch(() => fallbackTxt());
+    }
+    function fallbackTxt() {
+      const txt = `MARVELINO ALFRADO\nFreelance Web Developer\nKontak: +62 81998011501\nEmail: marvelpenanggal@gmail.com\n`;
+      const blob = new Blob([txt], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "CV-MARVELINO-ALFRADO.txt";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
     window.downloadCV = downloadCV;
 
-    // occasional glitch peak (scanline)
+    // occasional glitch peak
     (function enableGlitchPeak() {
       const name = document.querySelector(".name-highlight");
       if (!name) return;
@@ -210,8 +298,6 @@
     })();
 
     // ===== LOCATION POPUP =====
-    // Default coordinates set to Desa Penanggal, Candipuro, Lumajang
-    // (If you prefer to use a static embed iframe in HTML, the code below will not overwrite it.)
     const locationCoord = { lat: -8.142601221135756, lng: 113.03622707862603 };
     const mapZoom = 14;
 
@@ -223,41 +309,29 @@
       const popup = document.getElementById("mapPopup");
       const frame = document.getElementById("mapFrame");
       if (!popup) return;
-
-      // only set src if frame exists and currently empty (so we don't overwrite a manual embed)
       if (
         frame &&
         (!frame.getAttribute("src") || frame.getAttribute("src").trim() === "")
       ) {
         frame.setAttribute("src", buildMapSrc());
       }
-
       popup.style.display = "grid";
       popup.setAttribute("aria-hidden", "false");
-
-      // focus the close button for accessibility
       document.getElementById("mapClose")?.focus();
-
-      // add ESC handler specifically for map (safe to add multiple times because we remove on close)
       document.addEventListener("keydown", _mapEscHandler);
     }
 
-    // closeMap with cleanup
     function closeMap() {
       const popup = document.getElementById("mapPopup");
       const frame = document.getElementById("mapFrame");
       if (!popup) return;
       popup.style.display = "none";
       popup.setAttribute("aria-hidden", "true");
-
-      // if we injected the src dynamically we could clear it to stop loading.
-      // Only clear if it matches the built URL (prevents clearing a manual embed).
       if (frame) {
         const built = buildMapSrc();
         const cur = frame.getAttribute("src") || "";
         if (cur === built) frame.setAttribute("src", "");
       }
-
       document.removeEventListener("keydown", _mapEscHandler);
     }
 
@@ -265,38 +339,30 @@
       if (e.key === "Escape") closeMap();
     }
 
-    // map: click outside to close (overlay)
     const mapPopupEl = document.getElementById("mapPopup");
     if (mapPopupEl) {
       mapPopupEl.addEventListener("click", (e) => {
         if (e.target === mapPopupEl) closeMap();
       });
     }
-
-    // map close button hook (if present)
     const mapCloseBtn = document.getElementById("mapClose");
     if (mapCloseBtn) mapCloseBtn.addEventListener("click", closeMap);
 
-    // Integrate map closing with existing global Escape handler and lightbox
+    // global ESC handler for lightbox & map
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
-        // close lightbox if open
         if (lightbox && lightbox.style.display === "grid") {
           lightbox.style.display = "none";
           lightbox.setAttribute("aria-hidden", "true");
           document.getElementById("lbImg").src = "";
         }
-        // close map if open
         const mp = document.getElementById("mapPopup");
-        if (mp && mp.style.display === "grid") {
-          closeMap();
-        }
+        if (mp && mp.style.display === "grid") closeMap();
       }
     });
 
-    // expose for inline onclick attributes
+    // expose map functions
     window.openMap = openMap;
     window.closeMap = closeMap;
-  });
-  // DOMContentLoaded
+  }); // DOMContentLoaded
 })();
